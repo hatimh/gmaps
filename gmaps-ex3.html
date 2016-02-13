@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Info windows</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+        background-color: rgb(229, 227, 223);
+      }
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.js"></script>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script type="text/javascript">
+
+    var map;
+    var markers = [];
+    function initMap() {
+      var startingLatLng = {lat: 51.053, lng: -114.095};
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: startingLatLng,
+        zoom: 18,
+        scaleControl: true
+      });        
+
+      // var marker = new google.maps.Marker({
+      //   position: myLatLng,
+      //   map: map,
+      //   draggable: true,
+      //   animation: google.maps.Animation.DROP,
+      //   title: 'Assembly Coworking space!'
+      // });
+
+      google.maps.event.addListener(map, 'dragend', function() {       
+          lat = map.center.lat();
+          lng = map.center.lng();
+          rad = Math.ceil(31211*Math.exp(-0.697*map.zoom)); // radius in km
+          for(i=0; i<markers.length; i++){
+            markers[i].setMap(null);
+          };
+          markers = [];           
+          $.ajax({
+            url: 'https://api.500px.com/v1/photos/search?geo='+lat+','+lng+','+rad+'km',
+            method: 'GET',
+            data: {consumer_key : 'SFWyLT5y2KoBGubNzuaLSZ7ohkTwRKdzjP3PWRgx'},
+            success: function (data) {
+              
+              $.each(data.photos, function(index, photo){
+                var marker = new google.maps.Marker({
+                  position: {lat: photo.latitude, lng: photo.longitude},
+                  map: map,                 
+                  title: photo.name
+                });
+                markers.push(marker);
+                var infowindow = new google.maps.InfoWindow({
+                  content: '<img src =' + photo.image_url +'></img>'
+                });
+                marker.addListener('click', function(){
+                  
+                  infowindow.open(map, marker);
+                });
+              });
+            },
+            error: function() { 
+              
+            } 
+          });
+      });
+
+
+     
+    }
+
+    </script>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHtoeXlwnViZG2VuWGSdfULn2cjt020MY&callback=initMap">
+    </script>
+  </body>
+</html>
